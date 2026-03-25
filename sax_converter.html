@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alto Sax Hub | Maestro Edition</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            /* Light Mode (Warm, Maestro Sheet Music Vibe) */
+            --bg-body: #f4efeb;
+            --bg-nav: #e8ded3;
+            --bg-card: #ffffff;
+            --bg-controls: #f8f5f0;
+            --text-main: #3e352f;
+            --text-muted: #847970;
+            --accent-primary: #8b5a2b; /* Brown from screenshot 'Pause' btn */
+            --accent-secondary: #3a332a; /* Dark gray/brown from 'Restart' btn */
+            --border-color: #e0d6cb;
+            --staff-color: #3e352f;
+            
+            /* Fingering Keys Light */
+            --key-bg: #ffffff;
+            --key-border: #5a5047;
+            --key-pressed: #3a332a;
+            --key-text: #5a5047;
+            --key-text-pressed: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Mode */
+            --bg-body: #1a1715;
+            --bg-nav: #26211e;
+            --bg-card: #2a2522;
+            --bg-controls: #322d29;
+            --text-main: #e8ded3;
+            --text-muted: #9e9388;
+            --accent-primary: #b57c42; 
+            --accent-secondary: #5e544a;
+            --border-color: #403833;
+            --staff-color: #e8ded3;
+            
+            /* Fingering Keys Dark */
+            --key-bg: #322d29;
+            --key-border: #7a6f65;
+            --key-pressed: #b57c42;
+            --key-text: #cbbab0;
+            --key-text-pressed: #1a1715;
+        }
+
+        /* --- GLOBAL STYLES --- */
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            position: relative; /* Required for pseudo-element background positioning */
+        }
+
+        /* Transparent Musical Clef Pattern Layer */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2; /* Sit behind content, shadows, nav, cards, etc. */
+            opacity: 0.3; /* Subtlety is KEY for UX and dark mode compatibility */
+            
+            /* repeating abstract pattern of G-clefs, F-clefs, and notes encoded as SVG */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Ctext x='20' y='80' font-size='80' font-family='serif' fill='%23666' opacity='0.3'%3E𝄞%3C/text%3E%3Ctext x='100' y='140' font-size='60' font-family='serif' fill='%23666' opacity='0.3'%3E𝄢%3C/text%3E%3Ccircle cx='90' cy='30' r='6' fill='%23666' opacity='0.4'/%3E%3Crect x='88' y='0' width='3' height='30' fill='%23666' opacity='0.4'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 250px;
+        }
+
+        h1, h2, h3, .brand {
+            font-family: 'Playfair Display', serif;
+        }
+
+        h1 { margin-top: 0; font-size: 2.5rem; text-align: center; color: var(--text-main); }
+
+        /* --- NAVIGATION BAR --- */
+        nav {
+            background-color: var(--bg-nav);
+            width: 100%;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-sizing: border-box;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .brand i { color: var(--accent-primary); font-size: 1.8rem; }
+
+        .nav-links { display: flex; gap: 10px; align-items: center; }
+
+        .nav-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            padding: 8px 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover { color: var(--text-main); }
+        .nav-btn.active { color: var(--text-main); border-color: var(--border-color); background: var(--bg-card); font-weight: 600;}
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; margin-left: 15px;
+        }
+        .theme-toggle:hover { background: var(--bg-controls); }
+
+        /* --- MAIN CONTENT AREAS --- */
+        .view-section {
+            display: none; 
+            width: 100%;
+            max-width: 1100px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view-section.active { display: flex; flex-direction: column; align-items: center; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- CARD & CONTROLS --- */
+        .card-container {
+            background: var(--bg-card);
+            padding: 40px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            max-width: 650px; width: 100%; text-align: center;
+            box-sizing: border-box; border: 1px solid var(--border-color);
+            transition: background 0.3s, border-color 0.3s;
+            position: relative; z-index: 1; /* Sit above body background pattern */
+        }
+
+        .controls { 
+            display: flex; flex-direction: row; gap: 15px; margin-bottom: 30px; 
+            background: var(--bg-controls); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);
+            align-items: center; justify-content: space-between;
+        }
+        
+        .input-group { display: flex; flex-direction: column; text-align: left; gap: 6px; flex: 1;}
+        label { font-weight: 600; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        select {
+            width: 100%; padding: 10px 15px; font-size: 0.95rem; border: 1px solid var(--border-color); 
+            font-family: inherit; font-weight: 500; border-radius: 8px; cursor: pointer; 
+            outline: none; background-color: var(--bg-card); color: var(--text-main);
+            transition: all 0.2s;
+        }
+        select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.1); }
+        .divider { font-weight: 700; color: var(--text-muted); font-size: 0.8rem; font-style: italic;}
+
+        .result-box {
+            display: flex; align-items: center; justify-content: center; gap: 40px; background: var(--bg-controls);
+            padding: 30px; border-radius: 12px; margin-bottom: 30px; border: 1px solid var(--border-color);
+            flex-wrap: wrap; 
+        }
+        .result-item { text-align: left; }
+        .result-item h3 { margin: 0 0 5px 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif;}
+        .result-item h2 { margin: 0; font-size: 2.2rem; color: var(--text-main); font-weight: 700; }
+        
+        #converterStaffContainer .staff-svg { height: 120px; width: 95px; }
+
+        /* --- FULL CHART GRID STYLES --- */
+        .filter-container {
+            display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 40px;
+            background: var(--bg-card); padding: 25px; border-radius: 16px; border: 1px solid var(--border-color); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03); width: 100%; box-sizing: border-box; max-width: 800px;
+            position: relative; z-index: 1; /* Sit above body background pattern */
+        }
+
+        .filter-bar { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        
+        .filter-btn, .filter-select {
+            background: var(--bg-controls); border: 1px solid var(--border-color); color: var(--text-main); 
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s;
+            font-size: 0.95rem; font-family: inherit; outline: none;
+        }
+        
+        .filter-btn:hover, .filter-select:hover { border-color: var(--text-muted); }
+        .filter-btn.active { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
+        .filter-select { width: auto; padding: 10px 35px 10px 20px; appearance: auto; }
+
+        .full-chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; width: 100%; }
+
+        .note-card {
+            background: var(--bg-card); padding: 20px; border-radius: 12px;
+            border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative; z-index: 1; /* Sit above body background pattern */
+        }
+        .note-card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.06); }
+
+        .card-header { display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; margin-bottom: 10px; }
+        .staff-svg { height: 95px; width: 85px; overflow: visible; }
+        .note-titles { text-align: left; }
+        .note-titles h3 { margin: 0; color: var(--text-main); font-size: 1.6rem; }
+        .note-titles p { margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; font-family: 'Inter', sans-serif;}
+
+        .note-card .diagram { transform: scale(0.75); transform-origin: top center; margin-bottom: -70px; }
+
+        /* --- GLOBAL FINGERING DIAGRAM STYLES --- */
+        .diagram { display: flex; justify-content: center; gap: 30px; margin-top: 10px; }
+        .hand {
+            display: flex; flex-direction: column; align-items: center; background: var(--bg-controls);
+            padding: 15px; border-radius: 12px; border: 1px solid var(--border-color); position: relative; width: 120px;
+        }
+        .hand-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-family: 'Inter', sans-serif;}
+
+        .key {
+            border: 2px solid var(--key-border); background-color: var(--key-bg); display: flex; align-items: center;
+            justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--key-text);
+            transition: all 0.2s ease; user-select: none; font-family: 'Inter', sans-serif;
+        }
+
+        .main-key { width: 32px; height: 32px; border-radius: 50%; margin: 4px 0; }
+        .octave-key { width: 35px; height: 16px; border-radius: 10px; border-color: var(--accent-primary); color: var(--accent-primary); margin-bottom: 15px; }
+        .palm-cluster { display: flex; gap: 5px; margin-bottom: 8px; }
+        .palm-key { width: 25px; height: 16px; border-radius: 6px; }
+        
+        /* The side keys moved to the right */
+        .side-cluster { display: flex; flex-direction: column; gap: 5px; position: absolute; right: -25px; top: 40px; }
+        .side-key { width: 22px; height: 14px; border-radius: 4px; }
+        
+        .inside-key { position: absolute; border-radius: 4px; font-size: 0.6rem; right: 18px; }
+        .alt-f-key { width: 18px; height: 14px; top: 148px; border-radius: 8px; }
+        .high-f-key { width: 24px; height: 14px; top: 185px; right: 15px;}
+
+        .pinky-cluster { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 12px; background: var(--bg-card); padding: 6px; border-radius: 8px; border: 1px solid var(--border-color);}
+        .pinky-key { width: 25px; height: 18px; border-radius: 4px; }
+        .bis-key { width: 14px; height: 14px; border-radius: 50%; position: absolute; right: 12px; top: 98px; }
+
+        /* Pressed State */
+        .key.pressed { background-color: var(--key-pressed); border-color: var(--key-pressed); color: var(--key-text-pressed); transform: translateY(1px); }
+        .octave-key.pressed { background-color: var(--accent-primary); color: #fff; }
+
+        /* --- ABOUT SECTION STYLES --- */
+        .about-card { padding: 50px 40px; }
+        
+        .profile-container { margin-bottom: 30px; }
+        .profile-pic {
+            width: 100px; height: 100px; border-radius: 50%; background-color: var(--accent-secondary); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold;
+            margin: 0 auto 15px auto; font-family: 'Playfair Display', serif; border: 4px solid var(--bg-controls);
+        }
+        .about-name { font-size: 2rem; color: var(--text-main); margin: 0 0 5px 0; font-weight: 700; }
+        .about-role { color: var(--accent-primary); font-size: 0.95rem; font-weight: 600; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif;}
+        
+        .contact-links { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; flex-wrap: wrap;}
+        
+        .contact-link {
+            display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-weight: 500; font-family: 'Inter', sans-serif;
+            padding: 12px 24px; border-radius: 8px; transition: all 0.2s; font-size: 1rem;
+        }
+        .btn-email { background-color: var(--accent-primary); }
+        .btn-email:hover { background-color: var(--text-main); }
+        .btn-github { background-color: var(--accent-secondary); }
+        .btn-github:hover { background-color: var(--text-main); }
+
+        .contact-link i { font-size: 1.2rem; }
+
+        .ai-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--bg-controls); padding: 10px 20px; border-radius: 30px;
+            border: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; font-family: 'Inter', sans-serif;
+        }
+        .ai-badge i { color: var(--accent-primary); font-size: 1.1rem;}
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 768px) {
+            nav { flex-direction: column; gap: 15px; padding: 15px; }
+            .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .controls { flex-direction: column; }
+            .result-box { flex-direction: column; text-align: center; gap: 20px; }
+            .result-item { text-align: center; }
+            .diagram { flex-direction: column; align-items: center; gap: 15px; }
+            .theme-toggle { position: absolute; top: 15px; right: 15px; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="brand">
+        <i class="bi bi-music-note-beamed"></i>
+        Alto Sax Hub
+    </div>
+    <div class="nav-links">
+        <button class="nav-btn active" onclick="switchView('converter')">Converter</button>
+        <button class="nav-btn" onclick="switchView('fullChart')">Fingering Chart</button>
+        <button class="nav-btn" onclick="switchView('about')">About</button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+            <i id="theme-icon" class="bi bi-moon-fill"></i>
+        </button>
+    </div>
+</nav>
+
+<div id="view-converter" class="view-section active">
+    <div class="card-container">
+        <h1>Transposition Converter</h1>
+        <div class="controls">
+            <div class="input-group">
+                <label for="saxSelect">Written Sax Note</label>
+                <select id="saxSelect"><option value="" disabled selected>Choose Note...</option></select>
+            </div>
+            <div class="divider"><i class="bi bi-arrow-left-right"></i></div>
+            <div class="input-group">
+                <label for="concertSelect">Concert (Piano) Note</label>
+                <select id="concertSelect"><option value="" disabled selected>Choose Note...</option></select>
+            </div>
+        </div>
+
+        <div class="result-box">
+            <div id="converterStaffContainer"></div>
+            <div style="display: flex; gap: 40px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div class="result-item">
+                    <h3>Alto Sax</h3>
+                    <h2 id="saxDisplay">--</h2>
+                </div>
+                <div class="result-item">
+                    <h3>Concert</h3>
+                    <h2 id="concertDisplay">--</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagram" id="diagram-converter">
+            <div class="hand">
+                <div class="hand-title">Left Hand</div>
+                <div id="c_OCT" class="key octave-key">OCT</div>
+                <div class="palm-cluster">
+                    <div id="c_Palm_D" class="key palm-key">D</div>
+                    <div id="c_Palm_Eb" class="key palm-key">Eb</div>
+                    <div id="c_Palm_F" class="key palm-key">F</div>
+                </div>
+                <div id="c_L1" class="key main-key">1</div>
+                <div id="c_Bis" class="key bis-key">B</div>
+                <div id="c_L2" class="key main-key">2</div>
+                <div id="c_L3" class="key main-key">3</div>
+                <div class="pinky-cluster">
+                    <div id="c_L_Gsharp" class="key pinky-key">G#</div>
+                    <div id="c_L_Csharp" class="key pinky-key">C#</div>
+                    <div id="c_L_B" class="key pinky-key">B</div>
+                    <div id="c_L_Bb" class="key pinky-key">Bb</div>
+                </div>
+            </div>
+            <div class="hand">
+                <div class="hand-title">Right Hand</div>
+                <div class="side-cluster">
+                    <div id="c_Side_E" class="key side-key">E</div>
+                    <div id="c_Side_C" class="key side-key">C</div>
+                    <div id="c_Side_Bb" class="key side-key">Bb</div>
+                </div>
+                <div style="height: 30px;"></div>
+                <div id="c_R1" class="key main-key">1</div>
+                <div id="c_R2" class="key main-key">2</div>
+                <div id="c_Alt_Fsharp" class="key inside-key alt-f-key">F#</div>
+                <div id="c_R3" class="key main-key">3</div>
+                <div id="c_High_Fsharp" class="key inside-key high-f-key">Hi F#</div>
+                
+                <div class="pinky-cluster" style="grid-template-columns: 1fr;">
+                    <div id="c_R_Eb" class="key pinky-key">Eb</div>
+                    <div id="c_R_C" class="key pinky-key">C</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="view-fullChart" class="view-section">
+    <h1>Complete Fingering Chart</h1>
+    
+    <div class="filter-container">
+        <div class="filter-bar">
+            <button class="filter-btn active" onclick="setNoteType('all', this)">All Notes</button>
+            <button class="filter-btn" onclick="setNoteType('natural', this)">Naturals</button>
+            <button class="filter-btn" onclick="setNoteType('sharp', this)">Sharps (#)</button>
+            <button class="filter-btn" onclick="setNoteType('flat', this)">Flats (b)</button>
+        </div>
+        <div class="filter-bar">
+            <select id="octaveFilter" class="filter-select" onchange="setOctave(this.value)">
+                <option value="all">All Octaves</option>
+                <option value="3">Octave 3 (Low: Bb3 - B3)</option>
+                <option value="4">Octave 4 (Middle: C4 - B4)</option>
+                <option value="5">Octave 5 (High: C5 - B5)</option>
+                <option value="6">Octave 6 (Top: C6 - F#6)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="full-chart-grid" id="fullChartGrid"></div>
+</div>
+
+<div id="view-about" class="view-section">
+    <div class="card-container about-card">
+        <div class="profile-container">
+            <div class="profile-pic">DM</div>
+            <h2 class="about-name">Daniel Mercado</h2>
+            <p class="about-role">Developer & Creator</p>
+        </div>
+        
+        <div class="contact-links">
+            <a href="mailto:d.mercado.547990@umindanao.edu.ph" class="contact-link btn-email">
+                <i class="bi bi-envelope-fill"></i> Email Me
+            </a>
+            <a href="https://github.com/Dan1007Mercado" target="_blank" class="contact-link btn-github">
+                <i class="bi bi-github"></i> GitHub Profile
+            </a>
+        </div>
+
+        <div class="ai-badge">
+            <i class="bi bi-robot"></i> Made with AI &middot; Designed for Musicians
+        </div>
+    </div>
+</div>
+
+<script>
+    // Theme Toggling Logic
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('theme-icon');
+        
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            icon.className = 'bi bi-moon-fill';
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            icon.className = 'bi bi-sun-fill';
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    // Check saved theme on load
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-icon').className = 'bi bi-sun-fill';
+    }
+
+    // Master Database
+    const noteData = [
+        { sax: "Low Bb", short: "Bb3 / A#3", concert: "Piano: Db3", keys: ["L1", "L2", "L3", "L_Bb", "R1", "R2", "R3", "R_C"], staff: {y: 65, acc: 'b', ledgers: [60]} },
+        { sax: "Low B", short: "B3", concert: "Piano: D3", keys: ["L1", "L2", "L3", "L_B", "R1", "R2", "R3", "R_C"], staff: {y: 65, acc: '', ledgers: [60]} },
+        { sax: "Low C", short: "C4", concert: "Piano: Eb3", keys: ["L1", "L2", "L3", "R1", "R2", "R3", "R_C"], staff: {y: 60, acc: '', ledgers: [60]} },
+        { sax: "Low C#", short: "C#4 / Db4", concert: "Piano: E3", keys: ["L1", "L2", "L3", "L_Csharp", "R1", "R2", "R3", "R_C"], staff: {y: 60, acc: '#', ledgers: [60]} },
+        { sax: "Low D", short: "D4", concert: "Piano: F3", keys: ["L1", "L2", "L3", "R1", "R2", "R3"], staff: {y: 55, acc: '', ledgers: []} },
+        { sax: "Low Eb", short: "D#4 / Eb4", concert: "Piano: Gb3", keys: ["L1", "L2", "L3", "R1", "R2", "R3", "R_Eb"], staff: {y: 50, acc: 'b', ledgers: []} },
+        { sax: "Low E", short: "E4", concert: "Piano: G3", keys: ["L1", "L2", "L3", "R1", "R2"], staff: {y: 50, acc: '', ledgers: []} },
+        { sax: "Low F", short: "F4", concert: "Piano: Ab3", keys: ["L1", "L2", "L3", "R1"], staff: {y: 45, acc: '', ledgers: []} },
+        { sax: "Low F#", short: "F#4 / Gb4", concert: "Piano: A3", keys: ["L1", "L2", "L3", "R2"], staff: {y: 45, acc: '#', ledgers: []} },
+        { sax: "Low G", short: "G4", concert: "Piano: Bb3", keys: ["L1", "L2", "L3"], staff: {y: 40, acc: '', ledgers: []} },
+        { sax: "Low G#", short: "G#4 / Ab4", concert: "Piano: B3", keys: ["L1", "L2", "L3", "L_Gsharp"], staff: {y: 40, acc: '#', ledgers: []} },
+        { sax: "Middle A", short: "A4", concert: "Piano: C4", keys: ["L1", "L2"], staff: {y: 35, acc: '', ledgers: []} },
+        { sax: "Middle Bb", short: "A#4 / Bb4", concert: "Piano: Db4", keys: ["L1", "L2", "Side_Bb"], staff: {y: 30, acc: 'b', ledgers: []} },
+        { sax: "Middle B", short: "B4", concert: "Piano: D4", keys: ["L1"], staff: {y: 30, acc: '', ledgers: []} },
+        { sax: "Middle C", short: "C5", concert: "Piano: Eb4", keys: ["L2"], staff: {y: 25, acc: '', ledgers: []} },
+        { sax: "Middle C#", short: "C#5 / Db5", concert: "Piano: E4", keys: [], staff: {y: 25, acc: '#', ledgers: []} }, 
+        { sax: "Middle D", short: "D5", concert: "Piano: F4", keys: ["OCT", "L1", "L2", "L3", "R1", "R2", "R3"], staff: {y: 20, acc: '', ledgers: []} },
+        { sax: "Middle Eb", short: "D#5 / Eb5", concert: "Piano: Gb4", keys: ["OCT", "L1", "L2", "L3", "R1", "R2", "R3", "R_Eb"], staff: {y: 15, acc: 'b', ledgers: []} },
+        { sax: "Middle E", short: "E5", concert: "Piano: G4", keys: ["OCT", "L1", "L2", "L3", "R1", "R2"], staff: {y: 15, acc: '', ledgers: []} },
+        { sax: "Middle F", short: "F5", concert: "Piano: Ab4", keys: ["OCT", "L1", "L2", "L3", "R1"], staff: {y: 10, acc: '', ledgers: []} },
+        { sax: "Middle F#", short: "F#5 / Gb5", concert: "Piano: A4", keys: ["OCT", "L1", "L2", "L3", "R2"], staff: {y: 10, acc: '#', ledgers: []} },
+        { sax: "Middle G", short: "G5", concert: "Piano: Bb4", keys: ["OCT", "L1", "L2", "L3"], staff: {y: 5, acc: '', ledgers: []} },
+        { sax: "Middle G#", short: "G#5 / Ab5", concert: "Piano: B4", keys: ["OCT", "L1", "L2", "L3", "L_Gsharp"], staff: {y: 5, acc: '#', ledgers: []} },
+        { sax: "High A", short: "A5", concert: "Piano: C5", keys: ["OCT", "L1", "L2"], staff: {y: 0, acc: '', ledgers: [0]} },
+        { sax: "High Bb", short: "A#5 / Bb5", concert: "Piano: Db5", keys: ["OCT", "L1", "Bis", "L2"], staff: {y: -5, acc: 'b', ledgers: [0]} },
+        { sax: "High B", short: "B5", concert: "Piano: D5", keys: ["OCT", "L1"], staff: {y: -5, acc: '', ledgers: [0]} },
+        { sax: "High C", short: "C6", concert: "Piano: Eb5", keys: ["OCT", "L2"], staff: {y: -10, acc: '', ledgers: [0, -10]} },
+        { sax: "High C#", short: "C#6 / Db6", concert: "Piano: E5", keys: ["OCT"], staff: {y: -10, acc: '#', ledgers: [0, -10]} },
+        { sax: "High D", short: "D6", concert: "Piano: F5", keys: ["OCT", "Palm_D"], staff: {y: -15, acc: '', ledgers: [0, -10]} },
+        { sax: "High Eb", short: "D#6 / Eb6", concert: "Piano: Gb5", keys: ["OCT", "Palm_D", "Palm_Eb"], staff: {y: -20, acc: 'b', ledgers: [0, -10, -20]} },
+        { sax: "High E", short: "E6", concert: "Piano: G5", keys: ["OCT", "Palm_D", "Palm_Eb", "Side_E"], staff: {y: -20, acc: '', ledgers: [0, -10, -20]} },
+        { sax: "High F", short: "F6", concert: "Piano: Ab5", keys: ["OCT", "Palm_D", "Palm_Eb", "Palm_F", "Side_E"], staff: {y: -25, acc: '', ledgers: [0, -10, -20]} },
+        { sax: "High F#", short: "F#6 / Gb6", concert: "Piano: A5", keys: ["OCT", "Palm_D", "Palm_Eb", "Palm_F", "Side_E", "High_Fsharp"], staff: {y: -25, acc: '#', ledgers: [0, -10, -20]} }
+    ];
+
+    // SVG Staff Generator (Updated to use CSS variables for theme switching)
+    function createStaffSVG(staffData) {
+        if (!staffData) return '';
+        const { y, acc, ledgers } = staffData;
+        let ledgersHTML = '';
+        // Use currentColor or var(--staff-color) to adapt to dark/light mode
+        ledgers.forEach(l => { ledgersHTML += `<line x1="25" y1="${l}" x2="65" y2="${l}" stroke="var(--staff-color)" stroke-width="1.5" stroke-linecap="round"/>`; });
+        let accHTML = '';
+        if (acc === 'b') { accHTML = `<text x="10" y="${y + 5}" font-size="22" font-family="serif" font-weight="bold" fill="var(--staff-color)">&#9837;</text>`; } 
+        else if (acc === '#') { accHTML = `<text x="10" y="${y + 5}" font-size="22" font-family="serif" font-weight="bold" fill="var(--staff-color)">&#9839;</text>`; }
+        let stemHTML = y >= 30 ? `<line x1="50" y1="${y}" x2="50" y2="${y - 30}" stroke="var(--staff-color)" stroke-width="1.5"/>` : `<line x1="40" y1="${y}" x2="40" y2="${y + 30}" stroke="var(--staff-color)" stroke-width="1.5"/>`;
+
+        return `
+        <svg class="staff-svg" viewBox="0 -35 80 120">
+            <line x1="0" y1="10" x2="80" y2="10" stroke="var(--border-color)" stroke-width="1.5"/>
+            <line x1="0" y1="20" x2="80" y2="20" stroke="var(--border-color)" stroke-width="1.5"/>
+            <line x1="0" y1="30" x2="80" y2="30" stroke="var(--border-color)" stroke-width="1.5"/>
+            <line x1="0" y1="40" x2="80" y2="40" stroke="var(--border-color)" stroke-width="1.5"/>
+            <line x1="0" y1="50" x2="80" y2="50" stroke="var(--border-color)" stroke-width="1.5"/>
+            <text x="-2" y="52" font-size="45" font-family="serif" fill="var(--text-muted)">&#119070;</text>
+            ${ledgersHTML} ${stemHTML}
+            <ellipse cx="45" cy="${y}" rx="6.5" ry="4.5" fill="var(--staff-color)" transform="rotate(-15 45 ${y})" />
+            ${accHTML}
+        </svg>`;
+    }
+
+    // View Switching
+    function switchView(viewName) {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+        document.getElementById('view-' + viewName).classList.add('active');
+    }
+
+    // Converter Logic
+    const saxSelect = document.getElementById('saxSelect');
+    const concertSelect = document.getElementById('concertSelect');
+    const saxDisplay = document.getElementById('saxDisplay');
+    const concertDisplay = document.getElementById('concertDisplay');
+    const converterStaffContainer = document.getElementById('converterStaffContainer');
+    const converterKeys = document.querySelectorAll('#diagram-converter .key');
+
+    noteData.forEach((note, index) => {
+        const saxOpt = document.createElement('option');
+        saxOpt.value = index; saxOpt.textContent = `${note.sax} (${note.short})`;
+        saxSelect.appendChild(saxOpt);
+
+        const conOpt = document.createElement('option');
+        conOpt.value = index; conOpt.textContent = note.concert;
+        concertSelect.appendChild(conOpt);
+    });
+
+    function updateConverterUI(index) {
+        if(index === "") return;
+        const selectedNote = noteData[index];
+        saxSelect.value = index; concertSelect.value = index;
+        saxDisplay.textContent = selectedNote.sax;
+        concertDisplay.textContent = selectedNote.concert.replace("Piano: ", "");
+        converterStaffContainer.innerHTML = createStaffSVG(selectedNote.staff);
+
+        converterKeys.forEach(k => k.classList.remove('pressed'));
+        selectedNote.keys.forEach(keyId => {
+            const keyEl = document.getElementById('c_' + keyId);
+            if (keyEl) keyEl.classList.add('pressed');
+        });
+    }
+
+    saxSelect.addEventListener('change', (e) => updateConverterUI(e.target.value));
+    concertSelect.addEventListener('change', (e) => updateConverterUI(e.target.value));
+    updateConverterUI(14); // Default to Middle C
+
+    // Full Chart Logic
+    const chartGrid = document.getElementById('fullChartGrid');
+    let currentNoteType = 'all';
+    let currentOctave = 'all';
+
+    function createDiagramHTML(note) {
+        const isPressed = (keyId) => note.keys.includes(keyId) ? 'pressed' : '';
+        return `
+        <div class="note-card">
+            <div class="card-header">
+                ${createStaffSVG(note.staff)}
+                <div class="note-titles">
+                    <h3>${note.short}</h3>
+                    <p>${note.sax}</p>
+                </div>
+            </div>
+            <div class="diagram">
+                <div class="hand">
+                    <div class="key octave-key ${isPressed('OCT')}">OCT</div>
+                    <div class="palm-cluster">
+                        <div class="key palm-key ${isPressed('Palm_D')}">D</div>
+                        <div class="key palm-key ${isPressed('Palm_Eb')}">Eb</div>
+                        <div class="key palm-key ${isPressed('Palm_F')}">F</div>
+                    </div>
+                    <div class="key main-key ${isPressed('L1')}">1</div>
+                    <div class="key bis-key ${isPressed('Bis')}">B</div>
+                    <div class="key main-key ${isPressed('L2')}">2</div>
+                    <div class="key main-key ${isPressed('L3')}">3</div>
+                    <div class="pinky-cluster">
+                        <div class="key pinky-key ${isPressed('L_Gsharp')}">G#</div>
+                        <div class="key pinky-key ${isPressed('L_Csharp')}">C#</div>
+                        <div class="key pinky-key ${isPressed('L_B')}">B</div>
+                        <div class="key pinky-key ${isPressed('L_Bb')}">Bb</div>
+                    </div>
+                </div>
+                <div class="hand">
+                    <div class="side-cluster">
+                        <div class="key side-key ${isPressed('Side_E')}">E</div>
+                        <div class="key side-key ${isPressed('Side_C')}">C</div>
+                        <div class="key side-key ${isPressed('Side_Bb')}">Bb</div>
+                    </div>
+                    <div style="height: 30px;"></div>
+                    <div class="key main-key ${isPressed('R1')}">1</div>
+                    <div class="key main-key ${isPressed('R2')}">2</div>
+                    <div class="key inside-key alt-f-key ${isPressed('Alt_Fsharp')}">F#</div>
+                    <div class="key main-key ${isPressed('R3')}">3</div>
+                    <div class="key inside-key high-f-key ${isPressed('High_Fsharp')}">Hi F#</div>
+                    
+                    <div class="pinky-cluster" style="grid-template-columns: 1fr;">
+                        <div class="key pinky-key ${isPressed('R_Eb')}">Eb</div>
+                        <div class="key pinky-key ${isPressed('R_C')}">C</div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderChart(dataToRender) {
+        let gridHTML = "";
+        if (dataToRender.length === 0) {
+            gridHTML = "<div style='grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px;'>No notes match this filter combination.</div>";
+        } else {
+            dataToRender.forEach(note => { gridHTML += createDiagramHTML(note); });
+        }
+        chartGrid.innerHTML = gridHTML;
+    }
+
+    function setNoteType(type, btnElement) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        currentNoteType = type;
+        applyCombinedFilters();
+    }
+
+    function setOctave(octaveVal) {
+        currentOctave = octaveVal;
+        applyCombinedFilters();
+    }
+
+    function applyCombinedFilters() {
+        let filteredData = noteData;
+
+        if (currentNoteType === 'natural') {
+            filteredData = filteredData.filter(note => !note.short.includes('#') && !note.short.includes('b'));
+        } else if (currentNoteType === 'sharp') {
+            filteredData = filteredData.filter(note => note.short.includes('#'));
+        } else if (currentNoteType === 'flat') {
+            filteredData = filteredData.filter(note => note.short.includes('b'));
+        }
+
+        if (currentOctave !== 'all') {
+            filteredData = filteredData.filter(note => note.short.includes(currentOctave));
+        }
+
+        renderChart(filteredData);
+    }
+
+    renderChart(noteData);
+
+</script>
+</body>
+</html>
